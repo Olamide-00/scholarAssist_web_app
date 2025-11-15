@@ -1,5 +1,5 @@
 [build]
-builder = "nodejs"
+command = "npm install && npm run build"
 
 [static]
 directory = "dist"
