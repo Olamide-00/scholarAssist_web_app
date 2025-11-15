@@ -159,7 +159,9 @@ export const Navbar = () => {
               <span className="text-sm font-medium">+234 911 0383911</span>
             </a>
             
-            <button className="group relative px-6 py-3 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-xl text-white font-semibold hover:shadow-2xl hover:shadow-purple-500/50 transition-all duration-300 overflow-hidden">
+            <button
+                onClick={() => window.location.href = '/order'}
+            className="group relative px-6 py-3 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-xl text-white font-semibold hover:shadow-2xl hover:shadow-purple-500/50 transition-all duration-300 overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-cyan-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               <span className="relative z-10 flex items-center gap-2">
                 <Zap size={18} className="group-hover:scale-110 transition-transform" />
@@ -226,7 +228,9 @@ export const Navbar = () => {
                 <span>Call Now: +234 911 0383911</span>
               </a>
               
-              <button className="w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-xl text-white font-semibold hover:shadow-lg hover:shadow-purple-500/50 transition-all duration-300 flex items-center justify-center gap-2">
+              <button 
+               onClick={() => window.location.href = '/order'}
+              className="w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-xl text-white font-semibold hover:shadow-lg hover:shadow-purple-500/50 transition-all duration-300 flex items-center justify-center gap-2">
                 <Zap size={18} />
                 Start Your Project
               </button>
