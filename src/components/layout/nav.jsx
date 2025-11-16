@@ -1,32 +1,39 @@
+// src/components/layout/nav.jsx
 import { useState, useEffect } from "react";
-import { Menu, X, Sparkles, Phone, MessageCircle, ChevronDown, Star, Zap } from 'lucide-react';
+import { useNavigate, useLocation } from "react-router-dom";
+import { Menu, X, Sparkles, Phone, ChevronDown, Star, Zap } from 'lucide-react';
 
 export const Navbar = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState('home');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
+  const isHomePage = location.pathname === '/';
+
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 50);
       
-      // Update active section based on scroll position
-      const sections = ['home', 'services', 'about', 'process', 'testimonials', 'contact'];
-      const current = sections.find(section => {
-        const element = document.getElementById(section);
-        if (element) {
-          const rect = element.getBoundingClientRect();
-          return rect.top <= 100 && rect.bottom >= 100;
-        }
-        return false;
-      });
-      if (current) setActiveSection(current);
+      if (isHomePage) {
+        const sections = ['home', 'services', 'about', 'process', 'testimonials', 'contact'];
+        const current = sections.find(section => {
+          const element = document.getElementById(section);
+          if (element) {
+            const rect = element.getBoundingClientRect();
+            return rect.top <= 100 && rect.bottom >= 100;
+          }
+          return false;
+        });
+        if (current) setActiveSection(current);
+      }
     };
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [isHomePage]);
 
   const navItems = [
     { href: '#home', label: 'Home' },
@@ -47,11 +54,27 @@ export const Navbar = () => {
   ];
 
   const scrollToSection = (href) => {
-    const element = document.querySelector(href);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-      setIsOpen(false);
+    if (!isHomePage) {
+      // Navigate to home first, then scroll
+      navigate('/');
+      setTimeout(() => {
+        const element = document.querySelector(href);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
+    } else {
+      const element = document.querySelector(href);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
     }
+    setIsOpen(false);
+  };
+
+  const handleLogoClick = () => {
+    navigate('/');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
@@ -81,7 +104,7 @@ export const Navbar = () => {
           {/* Logo */}
           <div 
             className="flex items-center space-x-3 group cursor-pointer"
-            onClick={() => scrollToSection('#home')}
+            onClick={handleLogoClick}
           >
             <div className="relative">
               <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/25 group-hover:scale-110 transition-transform duration-300">
@@ -160,8 +183,9 @@ export const Navbar = () => {
             </a>
             
             <button
-                onClick={() => window.location.href = '/order'}
-            className="group relative px-6 py-3 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-xl text-white font-semibold hover:shadow-2xl hover:shadow-purple-500/50 transition-all duration-300 overflow-hidden">
+              onClick={() => navigate('/order')}
+              className="group relative px-6 py-3 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-xl text-white font-semibold hover:shadow-2xl hover:shadow-purple-500/50 transition-all duration-300 overflow-hidden"
+            >
               <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-cyan-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               <span className="relative z-10 flex items-center gap-2">
                 <Zap size={18} className="group-hover:scale-110 transition-transform" />
@@ -229,8 +253,9 @@ export const Navbar = () => {
               </a>
               
               <button 
-               onClick={() => window.location.href = '/order'}
-              className="w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-xl text-white font-semibold hover:shadow-lg hover:shadow-purple-500/50 transition-all duration-300 flex items-center justify-center gap-2">
+                onClick={() => navigate('/order')}
+                className="w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-xl text-white font-semibold hover:shadow-lg hover:shadow-purple-500/50 transition-all duration-300 flex items-center justify-center gap-2"
+              >
                 <Zap size={18} />
                 Start Your Project
               </button>
