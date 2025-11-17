@@ -60,7 +60,7 @@ export const Order = () => {
   return (
     <>
       <Navbar />
-      <section className="min-h-screen bg-slate-900 py-12 px-4 pt-24">
+      <section className="min-h-screen mt-10 bg-slate-900 py-12 px-4 pt-24">
         <div className="max-w-4xl mx-auto">
           <motion.div className="text-center mb-12" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
             <div className="inline-flex items-center gap-2 mb-4 px-4 py-2 bg-purple-500/10 border border-purple-500/20 rounded-full">

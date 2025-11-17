@@ -27,7 +27,8 @@ function Payment() {
   const paymentMethods = [
     { id: 'bank-transfer', name: 'Bank Transfer', icon: <Building2 size={24} />, description: 'Direct bank transfer', processingTime: '1–2 business days', fee: 'No fees', status: 'active' },
     { id: 'paypal', name: 'PayPal', icon: <Wallet size={24} />, description: 'PayPal balance or bank', processingTime: 'Instant', fee: '2.9% + £0.30', status: 'active' },
-    { id: 'wise', name: 'Wise Transfer', icon: <CreditCard size={24} />, description: 'International transfer', processingTime: '1 business day', fee: 'Low fees', status: 'active' }
+    { id: 'wise', name: 'Wise Transfer', icon: <CreditCard size={24} />, description: 'International transfer', processingTime: '1 business day', fee: 'Low fees', status: 'active' },
+    { id: 'crypto', name: 'Crypto', icon: <CreditCard size={24} />, description: 'Crypto payment', processingTime: 'instantly', fee: 'zero', status: 'active' }
   ];
 
   const cryptoAddresses = {
@@ -71,7 +72,7 @@ function Payment() {
   return (
     <>
       <Navbar />
-      <section className="min-h-screen bg-slate-900 py-12 px-4 pt-24">
+      <section className="min-h-screen mt-10 bg-slate-900 py-12 px-4 pt-24">
         <div className="max-w-4xl mx-auto">
           <motion.div className="text-center mb-12" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
             <button onClick={() => navigate('/order')} className="inline-flex items-center gap-2 mb-6 px-4 py-2 text-gray-400 hover:text-white transition-colors">
