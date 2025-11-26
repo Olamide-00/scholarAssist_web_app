@@ -1,31 +1,19 @@
 import { useState, useEffect } from 'react';
-import { Calculator, Clock, Zap, Shield, Check } from 'lucide-react';
+import { Calculator, Clock, Zap, Shield, Check, AlertCircle, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const PricingCalculator = () => {
   const [wordCount, setWordCount] = useState(1000);
-  const [deadline, setDeadline] = useState(7);
+  const [deadline, setDeadline] = useState(10);
   const [serviceType, setServiceType] = useState('academic');
-  const [academicLevel, setAcademicLevel] = useState('bachelor');
   const [quality, setQuality] = useState('standard');
   const [totalPrice, setTotalPrice] = useState(0);
+  const [showRushTooltip, setShowRushTooltip] = useState(false);
 
-  // Pricing structure (per word)
-  const baseRates = {
-    academic: {
-      bachelor: 0.08,
-      master: 0.12,
-      phd: 0.18
-    },
-    business: {
-      standard: 0.10,
-      professional: 0.15
-    },
-    creative: {
-      standard: 0.07,
-      premium: 0.12
-    }
-  };
+  // Flat rate pricing - €3.50 per 100 words = €0.035 per word
+  const BASE_RATE_PER_WORD = 0.035;
+  const BASE_RATE_PER_100_WORDS = 3.50;
+  const MINIMUM_DELIVERY_DAYS = 10;
 
   // Quality multipliers
   const qualityMultipliers = {
@@ -34,47 +22,39 @@ export const PricingCalculator = () => {
     'premium-plus': 2.0
   };
 
-  // Urgency multipliers
+  // Urgency multipliers (for rush orders < 10 days)
   const urgencyMultipliers = {
-    1: 2.5,  // 24 hours
-    2: 2.0,  // 48 hours
-    3: 1.8,  // 3 days
-    5: 1.5,  // 5 days
-    7: 1.2,  // 7 days
+    1: 3.0,  // 24 hours - Contact us
+    2: 2.8,  // 48 hours - Contact us
+    3: 2.5,  // 3 days - Contact us
+    5: 2.2,  // 5 days - Contact us
+    7: 1.8,  // 7 days - Contact us
+    10: 1.0, // 10 days - Standard
     14: 1.0, // 14 days
-    21: 0.9, // 21 days
-    30: 0.8  // 30 days
+    21: 0.95, // 21 days
+    30: 0.9  // 30 days
   };
 
   // Calculate price in real-time
   useEffect(() => {
     calculatePrice();
-  }, [wordCount, deadline, serviceType, academicLevel, quality]);
+  }, [wordCount, deadline, quality]);
 
   const calculatePrice = () => {
-    let baseRate;
-    
-    if (serviceType === 'academic') {
-      baseRate = baseRates.academic[academicLevel];
-    } else if (serviceType === 'business') {
-      baseRate = baseRates.business[quality === 'standard' ? 'standard' : 'professional'];
-    } else {
-      baseRate = baseRates.creative[quality === 'standard' ? 'standard' : 'premium'];
-    }
-
+    const basePrice = wordCount * BASE_RATE_PER_WORD;
     const urgencyMultiplier = urgencyMultipliers[deadline] || 1.0;
     const qualityMultiplier = qualityMultipliers[quality] || 1.0;
 
-    const calculatedPrice = wordCount * baseRate * urgencyMultiplier * qualityMultiplier;
-    setTotalPrice(Math.max(calculatedPrice, 49)); // Minimum $49
+    const calculatedPrice = basePrice * urgencyMultiplier * qualityMultiplier;
+    setTotalPrice(Math.max(calculatedPrice, 35)); // Minimum €35
   };
 
   const formatPrice = (price) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-EU', {
       style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
+      currency: 'EUR',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
     }).format(price);
   };
 
@@ -85,23 +65,62 @@ export const PricingCalculator = () => {
     return `${days} Days`;
   };
 
+  const isRushOrder = deadline < MINIMUM_DELIVERY_DAYS;
+
   const serviceTypes = [
     { id: 'academic', name: 'Academic Writing', icon: '📚' },
     { id: 'business', name: 'Business Writing', icon: '💼' },
     { id: 'creative', name: 'Creative Writing', icon: '✍️' }
   ];
 
-  const academicLevels = [
-    { id: 'bachelor', name: 'BSc/Bachelor', price: 'From $0.08/word' },
-    { id: 'master', name: 'MSc/Master', price: 'From $0.12/word' },
-    { id: 'phd', name: 'PhD/Doctoral', price: 'From $0.18/word' }
+  const qualityLevels = [
+    { 
+      id: 'standard', 
+      name: 'Standard', 
+      description: 'Professional quality writing',
+      tooltip: 'High-quality writing with proper formatting and structure'
+    },
+    { 
+      id: 'premium', 
+      name: 'Premium', 
+      description: 'Enhanced quality with expert review',
+      tooltip: 'Expert review, advanced research, and premium quality assurance'
+    },
+    { 
+      id: 'premium-plus', 
+      name: 'Premium Plus', 
+      description: 'Highest quality with senior expert',
+      tooltip: 'Senior expert assignment, in-depth analysis, and comprehensive review'
+    }
   ];
 
-  const qualityLevels = [
-    { id: 'standard', name: 'Standard', description: 'Professional quality writing' },
-    { id: 'premium', name: 'Premium', description: 'Enhanced quality with expert review' },
-    { id: 'premium-plus', name: 'Premium Plus', description: 'Highest quality with senior expert' }
-  ];
+  const Tooltip = ({ text, children }) => {
+    const [show, setShow] = useState(false);
+    
+    return (
+      <div className="relative inline-block">
+        <div
+          onMouseEnter={() => setShow(true)}
+          onMouseLeave={() => setShow(false)}
+        >
+          {children}
+        </div>
+        <AnimatePresence>
+          {show && (
+            <motion.div
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 5 }}
+              className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-xs text-gray-300 whitespace-nowrap shadow-lg"
+            >
+              {text}
+              <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-slate-800" />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  };
 
   return (
     <section id="pricing" className="relative py-16 md:py-20 px-4">
@@ -129,7 +148,7 @@ export const PricingCalculator = () => {
           </h2>
           
           <p className="text-gray-400 text-base md:text-lg max-w-2xl mx-auto">
-            Get real-time pricing based on your specific project requirements
+            Flat rate of €3.50 per 100 words for all writing services
           </p>
         </motion.div>
 
@@ -145,9 +164,14 @@ export const PricingCalculator = () => {
 
             {/* Word Count */}
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-300 mb-3">
-                Word Count: <span className="text-purple-400">{wordCount.toLocaleString()} words</span>
-              </label>
+              <div className="flex items-center justify-between mb-3">
+                <label className="block text-sm font-medium text-gray-300">
+                  Word Count: <span className="text-purple-400">{wordCount.toLocaleString()} words</span>
+                </label>
+                <Tooltip text="Enter the total number of words needed">
+                  <Info size={16} className="text-gray-400 cursor-help" />
+                </Tooltip>
+              </div>
               <input
                 type="range"
                 min="500"
@@ -165,7 +189,12 @@ export const PricingCalculator = () => {
 
             {/* Service Type */}
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-300 mb-3">Service Type</label>
+              <div className="flex items-center justify-between mb-3">
+                <label className="block text-sm font-medium text-gray-300">Service Type</label>
+                <Tooltip text="All services are priced at €3.50 per 100 words">
+                  <Info size={16} className="text-gray-400 cursor-help" />
+                </Tooltip>
+              </div>
               <div className="grid grid-cols-3 gap-2">
                 {serviceTypes.map((type) => (
                   <button
@@ -178,36 +207,14 @@ export const PricingCalculator = () => {
                     }`}
                   >
                     <div className="text-lg mb-1">{type.icon}</div>
-                    <div>{type.name}</div>
+                    <div className="text-xs">{type.name}</div>
                   </button>
                 ))}
               </div>
-            </div>
-
-            {/* Academic Level (only for academic writing) */}
-            {serviceType === 'academic' && (
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-300 mb-3">Academic Level</label>
-                <div className="space-y-2">
-                  {academicLevels.map((level) => (
-                    <button
-                      key={level.id}
-                      onClick={() => setAcademicLevel(level.id)}
-                      className={`w-full p-3 rounded-lg border text-left transition-all ${
-                        academicLevel === level.id
-                          ? 'border-cyan-500 bg-cyan-500/10 text-white'
-                          : 'border-slate-600 bg-slate-700/30 text-gray-400 hover:border-slate-500'
-                      }`}
-                    >
-                      <div className="flex justify-between items-center">
-                        <span className="font-medium">{level.name}</span>
-                        <span className="text-xs text-cyan-400">{level.price}</span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
+              <div className="mt-2 text-xs text-gray-400 text-center">
+                Same price for all academic levels (BSc, MSc, PhD)
               </div>
-            )}
+            </div>
 
             {/* Quality Level */}
             <div className="mb-6">
@@ -224,8 +231,13 @@ export const PricingCalculator = () => {
                     }`}
                   >
                     <div className="flex justify-between items-center">
-                      <div>
-                        <div className="font-medium">{level.name}</div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{level.name}</span>
+                          <Tooltip text={level.tooltip}>
+                            <Info size={14} className="text-gray-400 cursor-help" />
+                          </Tooltip>
+                        </div>
                         <div className="text-xs text-gray-400">{level.description}</div>
                       </div>
                       <Check size={16} className={quality === level.id ? 'text-green-400' : 'text-transparent'} />
@@ -237,9 +249,16 @@ export const PricingCalculator = () => {
 
             {/* Deadline */}
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-300 mb-3">
-                Deadline: <span className="text-orange-400">{getDeadlineText(deadline)}</span>
-              </label>
+              <div className="flex items-center justify-between mb-3">
+                <label className="block text-sm font-medium text-gray-300">
+                  Deadline: <span className={isRushOrder ? 'text-orange-400' : 'text-green-400'}>
+                    {getDeadlineText(deadline)}
+                  </span>
+                </label>
+                <Tooltip text="Standard delivery is 10+ days. Rush orders require contacting us">
+                  <Info size={16} className="text-gray-400 cursor-help" />
+                </Tooltip>
+              </div>
               <input
                 type="range"
                 min="1"
@@ -252,6 +271,26 @@ export const PricingCalculator = () => {
                 <span>24 Hours</span>
                 <span>30 Days</span>
               </div>
+              
+              {/* Rush Order Warning */}
+              <AnimatePresence>
+                {isRushOrder && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="mt-3 p-3 bg-orange-500/10 border border-orange-500/30 rounded-lg"
+                  >
+                    <div className="flex items-start gap-2">
+                      <AlertCircle size={16} className="text-orange-400 flex-shrink-0 mt-0.5" />
+                      <div className="text-xs text-orange-300">
+                        <strong>Rush Order:</strong> Orders with less than 10 days delivery require premium pricing. 
+                        Please contact us for a custom quote.
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </motion.div>
 
@@ -266,37 +305,56 @@ export const PricingCalculator = () => {
 
             {/* Total Price */}
             <div className="text-center mb-8 p-6 bg-slate-700/30 rounded-xl border border-purple-500/20">
-              <div className="text-gray-400 text-sm mb-2">Total Price</div>
+              <div className="text-gray-400 text-sm mb-2">
+                {isRushOrder ? 'Estimated Price (Contact Required)' : 'Total Price'}
+              </div>
               <div className="text-4xl md:text-5xl font-bold text-white mb-2">
                 {formatPrice(totalPrice)}
               </div>
               <div className="text-gray-400 text-sm">
                 {wordCount.toLocaleString()} words • {getDeadlineText(deadline)}
               </div>
+              {isRushOrder && (
+                <div className="mt-3 text-xs text-orange-400 font-medium">
+                  Rush order pricing - Contact us for confirmation
+                </div>
+              )}
             </div>
 
             {/* Price Breakdown */}
             <div className="space-y-4 mb-6">
               <div className="flex justify-between items-center py-2 border-b border-slate-700">
-                <span className="text-gray-400">Base Rate</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-400">Base Rate</span>
+                  <Tooltip text={`€${BASE_RATE_PER_100_WORDS} per 100 words`}>
+                    <Info size={14} className="text-gray-400 cursor-help" />
+                  </Tooltip>
+                </div>
                 <span className="text-white font-medium">
-                  {serviceType === 'academic' 
-                    ? formatPrice(wordCount * baseRates.academic[academicLevel])
-                    : serviceType === 'business'
-                    ? formatPrice(wordCount * baseRates.business[quality === 'standard' ? 'standard' : 'professional'])
-                    : formatPrice(wordCount * baseRates.creative[quality === 'standard' ? 'standard' : 'premium'])
-                  }
+                  {formatPrice(wordCount * BASE_RATE_PER_WORD)}
                 </span>
               </div>
 
               <div className="flex justify-between items-center py-2 border-b border-slate-700">
-                <span className="text-gray-400">Quality ({quality})</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-400">Quality ({quality})</span>
+                  <Tooltip text="Premium quality includes expert review and enhanced features">
+                    <Info size={14} className="text-gray-400 cursor-help" />
+                  </Tooltip>
+                </div>
                 <span className="text-green-400 font-medium">×{qualityMultipliers[quality]}</span>
               </div>
 
               <div className="flex justify-between items-center py-2 border-b border-slate-700">
-                <span className="text-gray-400">Urgency ({getDeadlineText(deadline)})</span>
-                <span className="text-orange-400 font-medium">×{urgencyMultipliers[deadline]}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-400">Delivery ({getDeadlineText(deadline)})</span>
+                  <Tooltip text={isRushOrder ? "Rush delivery requires premium pricing" : "Standard delivery time"}>
+                    <Info size={14} className="text-gray-400 cursor-help" />
+                  </Tooltip>
+                </div>
+                <span className={`${isRushOrder ? 'text-orange-400' : 'text-green-400'} font-medium`}>
+                  ×{urgencyMultipliers[deadline]}
+                </span>
               </div>
             </div>
 
@@ -310,8 +368,9 @@ export const PricingCalculator = () => {
                   'Plagiarism Report',
                   'Formatting',
                   '24/7 Support',
-                  quality !== 'standard' ? 'Expert Review' : 'Basic Quality Check',
-                  quality === 'premium-plus' ? 'Senior Expert Assignment' : 'Standard Writer'
+                  quality !== 'standard' ? 'Expert Review' : 'Quality Assurance',
+                  quality === 'premium-plus' ? 'Senior Expert Assignment' : 'Experienced Writer',
+                  !isRushOrder ? 'Standard Delivery (10+ days)' : 'Rush Delivery (Contact Required)'
                 ].map((feature, index) => (
                   <div key={index} className="flex items-center gap-3 text-sm">
                     <Check size={14} className="text-green-400 flex-shrink-0" />
@@ -322,16 +381,34 @@ export const PricingCalculator = () => {
             </div>
 
             {/* CTA Button */}
-            <button className="w-full py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors duration-300 flex items-center justify-center gap-2">
-              <Zap size={18} />
-              Proceed with Order
-            </button>
+            {isRushOrder ? (
+              <button className="w-full py-3 bg-orange-600 text-white font-semibold rounded-lg hover:bg-orange-700 transition-colors duration-300 flex items-center justify-center gap-2">
+                <AlertCircle size={18} />
+                Contact Us for Rush Order
+              </button>
+            ) : (
+              <button className="w-full py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors duration-300 flex items-center justify-center gap-2">
+                <Zap size={18} />
+                Proceed with Order
+              </button>
+            )}
 
             {/* Guarantee */}
             <div className="text-center mt-4">
               <div className="flex items-center justify-center gap-2 text-xs text-gray-400">
                 <Shield size={12} />
                 <span>100% Confidential • Money-Back Guarantee</span>
+              </div>
+            </div>
+
+            {/* Pricing Note */}
+            <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+              <div className="flex items-start gap-2">
+                <Info size={14} className="text-blue-400 flex-shrink-0 mt-0.5" />
+                <div className="text-xs text-blue-300">
+                  <strong>Simple Pricing:</strong> €3.50 per 100 words for all services. 
+                  Same rate for BSc, MSc, PhD, and all writing types.
+                </div>
               </div>
             </div>
           </motion.div>
@@ -357,6 +434,24 @@ export const PricingCalculator = () => {
           background: #a855f7;
           cursor: pointer;
           border: 2px solid #1e293b;
+        }
+
+        @keyframes float-slow {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-20px); }
+        }
+
+        @keyframes float-medium {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-15px); }
+        }
+
+        .animate-float-slow {
+          animation: float-slow 6s ease-in-out infinite;
+        }
+
+        .animate-float-medium {
+          animation: float-medium 4s ease-in-out infinite;
         }
       `}</style>
     </section>
